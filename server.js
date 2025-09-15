@@ -1,0 +1,126 @@
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const morgan = require("morgan");
+const rateLimit = require("express-rate-limit");
+const dotenv = require("dotenv");
+const path = require("path");
+
+// Load environment variables
+dotenv.config({ path: "./config.env" });
+
+// Import database connection
+const connectDB = require("./config/database");
+
+// Import routes
+const authRoute = require("./routes/authRoute");
+const adminRoute = require("./routes/adminRoute");
+const driverRoute = require("./routes/driverRoute");
+const vehicleRoute = require("./routes/vehicleRoute");
+const projectRoute = require("./routes/projectRoute");
+const tripRoute = require("./routes/tripRoute");
+const vehicleGroupRoute = require("./routes/vehicleGroupRoute");
+const reportRoute = require("./routes/reportRoute");
+
+// Import middleware
+const { authenticateToken } = require("./middleware/auth");
+const { basicAuth } = require("./middleware/basicAuth");
+
+const app = express();
+
+// Security middleware
+app.use(helmet());
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production"
+        ? ["https://yourdomain.com"]
+        : ["http://localhost:3000"],
+    credentials: true,
+  })
+);
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later.",
+});
+app.use("/api/", limiter);
+
+// Logging middleware
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
+
+// Body parsing middleware
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Static files
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// Basic authentication for all API routes
+app.use("/api", basicAuth);
+
+// API Routes
+app.use("/api/auth", authRoute);
+app.use("/api/admin", authenticateToken, adminRoute);
+app.use("/api/driver", authenticateToken, driverRoute);
+app.use("/api/vehicle", authenticateToken, vehicleRoute);
+app.use("/api/project", authenticateToken, projectRoute);
+app.use("/api/trip", authenticateToken, tripRoute);
+app.use("/api/vehicle-group", authenticateToken, vehicleGroupRoute);
+app.use("/api/report", authenticateToken, reportRoute);
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "success",
+    message: "Transport Management API is running",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// 404 handler
+app.use("/api/*", (req, res) => {
+  res.status(404).json({
+    status: "error",
+    message: "API endpoint not found",
+  });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    status: "error",
+    message:
+      process.env.NODE_ENV === "development"
+        ? err.message
+        : "Internal server error",
+  });
+});
+
+// Initialize server
+const startServer = async () => {
+  try {
+    // Connect to database
+    await connectDB();
+
+    // Start server
+    const PORT = process.env.PORT || 5002;
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+// Start the server
+startServer();
+
+module.exports = app;
