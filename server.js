@@ -30,45 +30,41 @@ const app = express();
 
 // Security middleware
 app.use(helmet());
-// CORS configuration
-if (process.env.NODE_ENV === "development") {
-  // More permissive CORS for development
-  app.use(
-    cors({
-      origin: true,
-      credentials: true,
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-    })
-  );
-} else {
-  // Production CORS with specific origins
-  app.use(
-    cors({
-      origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
+// CORS configuration - Allow specific origins including your frontend
+app.use((req, res, next) => {
+  const allowedOrigins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://transport-backend-nine.vercel.app",
+    "https://transport-frontend-d9cm.vercel.app", // Your frontend domain
+    "https://transport-frontend-d9cm.vercel.app/", // With trailing slash
+  ];
 
-        const allowedOrigins = [
-          "http://localhost:3000",
-          "http://localhost:3001",
-          "https://transport-backend-nine.vercel.app",
-          "https://your-frontend-domain.vercel.app", // Replace with your actual frontend domain
-          "https://yourdomain.com",
-        ];
+  const origin = req.headers.origin;
 
-        if (allowedOrigins.indexOf(origin) !== -1) {
-          callback(null, true);
-        } else {
-          callback(new Error("Not allowed by CORS"));
-        }
-      },
-      credentials: true,
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-    })
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  } else if (!origin) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    res.header("Access-Control-Allow-Origin", "*");
+  } else {
+    // For development/testing, allow all origins
+    res.header("Access-Control-Allow-Origin", "*");
+  }
+
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With"
   );
-}
+  res.header("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 
 // Handle preflight OPTIONS requests
 app.options("*", (req, res) => {
@@ -114,6 +110,21 @@ app.use("/api/project", authenticateToken, projectRoute);
 app.use("/api/trip", authenticateToken, tripRoute);
 app.use("/api/vehicle-group", authenticateToken, vehicleGroupRoute);
 app.use("/api/report", authenticateToken, reportRoute);
+
+// Welcome endpoint (no authentication required)
+app.get("/api/welcome", (req, res) => {
+  res.status(200).json({
+    status: "success",
+    message: "Welcome to Transport Management API!",
+    timestamp: new Date().toISOString(),
+    version: "1.0.0",
+    endpoints: {
+      health: "/api/health",
+      welcome: "/api/welcome",
+      auth: "/api/auth/login",
+    },
+  });
+});
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
