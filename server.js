@@ -52,12 +52,16 @@ app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
   }
 
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+  );
   res.header(
     "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, X-Requested-With"
+    "Content-Type, Authorization, X-Requested-With, Accept, Origin, token, sec-ch-ua, sec-ch-ua-mobile, sec-ch-ua-platform, user-agent, referer"
   );
   res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Expose-Headers", "Authorization, token");
 
   if (req.method === "OPTIONS") {
     res.sendStatus(200);
@@ -68,13 +72,31 @@ app.use((req, res, next) => {
 
 // Handle preflight OPTIONS requests
 app.options("*", (req, res) => {
-  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://transport-backend-nine.vercel.app",
+    "https://transport-frontend-d9cm.vercel.app",
+    "https://transport-frontend-d9cm.vercel.app/",
+  ];
+
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  } else {
+    res.header("Access-Control-Allow-Origin", "*");
+  }
+
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+  );
   res.header(
     "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, X-Requested-With"
+    "Content-Type, Authorization, X-Requested-With, Accept, Origin, token, sec-ch-ua, sec-ch-ua-mobile, sec-ch-ua-platform, user-agent, referer"
   );
   res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Expose-Headers", "Authorization, token");
   res.sendStatus(200);
 });
 
