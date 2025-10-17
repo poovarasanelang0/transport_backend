@@ -37,7 +37,9 @@ const basicAuth = (req, res, next) => {
       });
     }
 
-    const credentials = Buffer.from(base64Credentials, "base64").toString("ascii");
+    const credentials = Buffer.from(base64Credentials, "base64").toString(
+      "ascii"
+    );
     const [username, password] = credentials.split(":");
 
     if (!username || !password) {
@@ -50,7 +52,8 @@ const basicAuth = (req, res, next) => {
 
     // Use hardcoded credentials for now to avoid env issues
     const expectedUsername = "poovarasan";
-    const expectedPassword = "DAF87DSFDSFDSA98FSADKJE324KJL32HFD7FDSFB24343J49DSF";
+    const expectedPassword =
+      "DAF87DSFDSFDSA98FSADKJE324KJL32HFD7FDSFB24343J49DSF";
 
     console.log("Basic Auth - Username match:", username === expectedUsername);
     console.log("Basic Auth - Password match:", password === expectedPassword);

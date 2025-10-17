@@ -256,6 +256,23 @@ app.get("/api/simple-test", (req, res) => {
   });
 });
 
+// Environment variables check endpoint
+app.get("/api/env-check", (req, res) => {
+  res.status(200).json({
+    status: "success",
+    message: "Environment variables check",
+    environment: {
+      NODE_ENV: process.env.NODE_ENV,
+      VERCEL: process.env.VERCEL,
+      PORT: process.env.PORT,
+      MONGODB_URI: process.env.MONGODB_URI ? "Set" : "Not set",
+      JWT_SECRET: process.env.JWT_SECRET ? "Set" : "Not set",
+      BASIC_AUTH_USERNAME: process.env.BASIC_AUTH_USERNAME ? "Set" : "Not set",
+      BASIC_AUTH_PASSWORD: process.env.BASIC_AUTH_PASSWORD ? "Set" : "Not set",
+    },
+  });
+});
+
 // 404 handler
 app.use("/api/*", (req, res) => {
   res.status(404).json({
@@ -278,9 +295,16 @@ app.use((err, req, res, next) => {
 // Initialize server
 const startServer = async () => {
   try {
-    console.log("Starting server...");
+    console.log("=== SERVER STARTUP DEBUG ===");
     console.log("Environment:", process.env.NODE_ENV);
     console.log("Vercel:", process.env.VERCEL);
+    console.log("Port:", process.env.PORT);
+    console.log("MongoDB URI exists:", !!process.env.MONGODB_URI);
+    console.log("JWT Secret exists:", !!process.env.JWT_SECRET);
+    console.log(
+      "Basic Auth Username exists:",
+      !!process.env.BASIC_AUTH_USERNAME
+    );
 
     // Connect to database
     console.log("Connecting to database...");
@@ -290,10 +314,13 @@ const startServer = async () => {
     // Start server
     const PORT = process.env.PORT || 5002;
     app.listen(PORT, () => {
-      console.log(`Server started on port ${PORT}`);
+      console.log(`✅ Server started successfully on port ${PORT}`);
+      console.log("=== SERVER READY ===");
     });
   } catch (error) {
-    console.error("Server startup error:", error);
+    console.error("❌ Server startup error:", error);
+    console.error("Error details:", error.message);
+    console.error("Stack trace:", error.stack);
     process.exit(1);
   }
 };
