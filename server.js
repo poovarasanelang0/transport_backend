@@ -236,6 +236,15 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// Test Basic Auth endpoint
+app.get("/api/test-auth", (req, res) => {
+  res.status(200).json({
+    status: "success",
+    message: "Basic Auth is working!",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // 404 handler
 app.use("/api/*", (req, res) => {
   res.status(404).json({
