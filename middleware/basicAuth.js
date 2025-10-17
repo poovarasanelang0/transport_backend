@@ -2,12 +2,12 @@ const basicAuth = (req, res, next) => {
   // Skip basic auth for public endpoints
   const publicPaths = [
     "/health",
-    "/api/health", 
+    "/api/health",
     "/api/welcome",
     "/api/simple-test",
-    "/api/env-check"
+    "/api/env-check",
   ];
-  
+
   if (publicPaths.includes(req.path)) {
     console.log("Skipping Basic Auth for public path:", req.path);
     return next();

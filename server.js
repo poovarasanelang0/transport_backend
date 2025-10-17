@@ -199,20 +199,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 // Static files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Basic authentication for all API routes
-app.use("/api", basicAuth);
-
-// API Routes
-app.use("/api/auth", authRoute);
-app.use("/api/admin", authenticateToken, adminRoute);
-app.use("/api/driver", authenticateToken, driverRoute);
-app.use("/api/vehicle", authenticateToken, vehicleRoute);
-app.use("/api/project", authenticateToken, projectRoute);
-app.use("/api/trip", authenticateToken, tripRoute);
-app.use("/api/vehicle-group", authenticateToken, vehicleGroupRoute);
-app.use("/api/report", authenticateToken, reportRoute);
-
-// Welcome endpoint (no authentication required)
+// Public endpoints (no authentication required) - MUST be before Basic Auth
 app.get("/api/welcome", (req, res) => {
   res.status(200).json({
     status: "success",
@@ -232,15 +219,6 @@ app.get("/api/health", (req, res) => {
   res.status(200).json({
     status: "success",
     message: "Transport Management API is running",
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Test Basic Auth endpoint
-app.get("/api/test-auth", (req, res) => {
-  res.status(200).json({
-    status: "success",
-    message: "Basic Auth is working!",
     timestamp: new Date().toISOString(),
   });
 });
@@ -270,6 +248,28 @@ app.get("/api/env-check", (req, res) => {
       BASIC_AUTH_USERNAME: process.env.BASIC_AUTH_USERNAME ? "Set" : "Not set",
       BASIC_AUTH_PASSWORD: process.env.BASIC_AUTH_PASSWORD ? "Set" : "Not set",
     },
+  });
+});
+
+// Basic authentication for all API routes
+app.use("/api", basicAuth);
+
+// API Routes
+app.use("/api/auth", authRoute);
+app.use("/api/admin", authenticateToken, adminRoute);
+app.use("/api/driver", authenticateToken, driverRoute);
+app.use("/api/vehicle", authenticateToken, vehicleRoute);
+app.use("/api/project", authenticateToken, projectRoute);
+app.use("/api/trip", authenticateToken, tripRoute);
+app.use("/api/vehicle-group", authenticateToken, vehicleGroupRoute);
+app.use("/api/report", authenticateToken, reportRoute);
+
+// Test Basic Auth endpoint
+app.get("/api/test-auth", (req, res) => {
+  res.status(200).json({
+    status: "success",
+    message: "Basic Auth is working!",
+    timestamp: new Date().toISOString(),
   });
 });
 
