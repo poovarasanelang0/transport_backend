@@ -199,7 +199,20 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 // Static files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Public endpoints (no authentication required)
+// Basic authentication for all API routes
+app.use("/api", basicAuth);
+
+// API Routes
+app.use("/api/auth", authRoute);
+app.use("/api/admin", authenticateToken, adminRoute);
+app.use("/api/driver", authenticateToken, driverRoute);
+app.use("/api/vehicle", authenticateToken, vehicleRoute);
+app.use("/api/project", authenticateToken, projectRoute);
+app.use("/api/trip", authenticateToken, tripRoute);
+app.use("/api/vehicle-group", authenticateToken, vehicleGroupRoute);
+app.use("/api/report", authenticateToken, reportRoute);
+
+// Welcome endpoint (no authentication required)
 app.get("/api/welcome", (req, res) => {
   res.status(200).json({
     status: "success",
@@ -214,6 +227,7 @@ app.get("/api/welcome", (req, res) => {
   });
 });
 
+// Health check endpoint
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     status: "success",
@@ -222,25 +236,23 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Basic authentication for all other API routes
-app.use("/api", basicAuth);
-
-// API Routes (require authentication)
-app.use("/api/auth", authRoute);
-app.use("/api/admin", authenticateToken, adminRoute);
-app.use("/api/driver", authenticateToken, driverRoute);
-app.use("/api/vehicle", authenticateToken, vehicleRoute);
-app.use("/api/project", authenticateToken, projectRoute);
-app.use("/api/trip", authenticateToken, tripRoute);
-app.use("/api/vehicle-group", authenticateToken, vehicleGroupRoute);
-app.use("/api/report", authenticateToken, reportRoute);
-
-// Test Basic Auth endpoint (requires authentication)
+// Test Basic Auth endpoint
 app.get("/api/test-auth", (req, res) => {
   res.status(200).json({
     status: "success",
     message: "Basic Auth is working!",
     timestamp: new Date().toISOString(),
+  });
+});
+
+// Simple test endpoint without any middleware
+app.get("/api/simple-test", (req, res) => {
+  res.status(200).json({
+    status: "success",
+    message: "Server is working!",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    vercel: process.env.VERCEL,
   });
 });
 
