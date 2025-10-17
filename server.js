@@ -35,9 +35,8 @@ app.use((req, res, next) => {
   const allowedOrigins = [
     "http://localhost:3000",
     "http://localhost:3001",
-    "https://transport-backend-nine.vercel.app",
-    "https://transport-frontend-d9cm.vercel.app", // Your frontend domain
-    "https://transport-frontend-d9cm.vercel.app/", // With trailing slash
+    "https://transport-backend-new.vercel.app",
+    "https://transport-frontend-new.vercel.app",
   ];
 
   const origin = req.headers.origin;
@@ -73,13 +72,7 @@ app.use((req, res, next) => {
 // Handle preflight OPTIONS requests
 app.options("*", (req, res) => {
   const origin = req.headers.origin;
-  const allowedOrigins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "https://transport-backend-nine.vercel.app",
-    "https://transport-frontend-d9cm.vercel.app",
-    "https://transport-frontend-d9cm.vercel.app/",
-  ];
+  const allowedOrigins = ["http://localhost:3000", "http://localhost:3001"];
 
   if (allowedOrigins.includes(origin)) {
     res.header("Access-Control-Allow-Origin", origin);
@@ -230,7 +223,6 @@ app.get("/api/simple-test", (req, res) => {
     message: "Server is working!",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
-    vercel: process.env.VERCEL,
   });
 });
 
@@ -241,7 +233,6 @@ app.get("/api/env-check", (req, res) => {
     message: "Environment variables check",
     environment: {
       NODE_ENV: process.env.NODE_ENV,
-      VERCEL: process.env.VERCEL,
       PORT: process.env.PORT,
       MONGODB_URI: process.env.MONGODB_URI ? "Set" : "Not set",
       JWT_SECRET: process.env.JWT_SECRET ? "Set" : "Not set",
@@ -297,7 +288,6 @@ const startServer = async () => {
   try {
     console.log("=== SERVER STARTUP DEBUG ===");
     console.log("Environment:", process.env.NODE_ENV);
-    console.log("Vercel:", process.env.VERCEL);
     console.log("Port:", process.env.PORT);
     console.log("MongoDB URI exists:", !!process.env.MONGODB_URI);
     console.log("JWT Secret exists:", !!process.env.JWT_SECRET);

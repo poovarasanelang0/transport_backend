@@ -3,7 +3,7 @@
 # API Testing Script for Transport Backend
 # Run this script to test your deployed API
 
-API_BASE="https://transport-backend-nine.vercel.app/api"
+API_BASE="http://localhost:5002/api"
 
 echo "🚀 Testing Transport Backend API"
 echo "================================"
