@@ -130,4 +130,11 @@ router.delete("/:id", adminController.deleteAdmin);
 // Toggle admin status
 router.patch("/:id/toggle-status", adminController.toggleAdminStatus);
 
+// Forgot password routes
+router.post("/forgot-password", adminController.forgotPassword);
+router.post("/reset-password", adminController.resetPassword);
+
+// Direct password reset (admin only)
+router.post("/:id/reset-password", adminController.directPasswordReset);
+
 module.exports = router;

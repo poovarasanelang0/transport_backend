@@ -147,33 +147,32 @@ driverSchema.virtual("licenseStatus").get(function () {
   }
 });
 
-// Pre-save middleware to generate sequential driverId (disabled to prevent conflicts)
-// driverSchema.pre("save", async function (next) {
-//   if (this.isNew && !this.driverId) {
-//     try {
-//       // Get the highest existing driverId number
-//       const lastDriver = await this.constructor.findOne(
-//         { driverId: { $regex: /^DRV\d+$/ } },
-//         { driverId: 1 },
-//         { sort: { driverId: -1 } }
-//       );
+// Pre-save middleware to generate sequential driverId (DRV01, DRV02, etc.)
+driverSchema.pre("save", async function (next) {
+  if (this.isNew && !this.driverId) {
+    try {
+      // Get the highest existing driverId number
+      const lastDriver = await this.constructor.findOne(
+        { driverId: { $regex: /^DRV\d+$/ } },
+        { driverId: 1 },
+        { sort: { driverId: -1 } }
+      );
 
-//       let nextNumber = 1;
-//       if (lastDriver && lastDriver.driverId) {
-//         const lastNumber = parseInt(lastDriver.driverId.replace("DRV", ""));
-//         nextNumber = lastNumber + 1;
-//       }
+      let nextNumber = 1;
+      if (lastDriver && lastDriver.driverId) {
+        const lastNumber = parseInt(lastDriver.driverId.replace("DRV", ""));
+        nextNumber = lastNumber + 1;
+      }
 
-//       this.driverId = `DRV${String(nextNumber).padStart(3, "0")}`;
-//       console.log(`Generated driverId: ${this.driverId}`);
-//     } catch (error) {
-//       console.error("Error generating driverId:", error);
-//       // Fallback to timestamp-based ID if counting fails
-//       this.driverId = `DRV${Date.now().toString().slice(-6)}`;
-//     }
-//   }
-//   next();
-// });
+      this.driverId = `DRV${String(nextNumber).padStart(2, "0")}`;
+    } catch (error) {
+      console.error("Error generating driverId:", error);
+      // Fallback to timestamp-based ID if counting fails
+      this.driverId = `DRV${Date.now().toString().slice(-6)}`;
+    }
+  }
+  next();
+});
 
 // Ensure virtual fields are serialized
 driverSchema.set("toJSON", {

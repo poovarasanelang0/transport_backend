@@ -143,14 +143,27 @@ const createProject = async (req, res) => {
       adminId,
     });
 
-    // Generate unique projectId using timestamp approach
-    const timestamp = Date.now().toString().slice(-8);
-    const randomSuffix = Math.floor(Math.random() * 1000)
-      .toString()
-      .padStart(3, "0");
-    project.projectId = `PRJ${timestamp}${randomSuffix}`;
+    // Generate sequential projectId (PRJ01, PRJ02, etc.)
+    try {
+      const lastProject = await Project.findOne(
+        { projectId: { $regex: /^PRJ\d+$/ } },
+        { projectId: 1 },
+        { sort: { projectId: -1 } }
+      );
 
-    console.log(`Controller generated projectId: ${project.projectId}`);
+      let nextNumber = 1;
+      if (lastProject && lastProject.projectId) {
+        const lastNumber = parseInt(lastProject.projectId.replace("PRJ", ""));
+        nextNumber = lastNumber + 1;
+      }
+
+      project.projectId = `PRJ${String(nextNumber).padStart(2, "0")}`;
+    } catch (error) {
+      console.error("Error generating projectId:", error);
+      // Fallback to timestamp-based ID if counting fails
+      const timestamp = Date.now().toString().slice(-6);
+      project.projectId = `PRJ${timestamp}`;
+    }
 
     await project.save();
 

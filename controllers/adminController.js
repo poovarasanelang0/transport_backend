@@ -1,5 +1,6 @@
 const Admin = require("../models/adminModel");
 const { validationResult } = require("express-validator");
+const crypto = require("crypto");
 
 // Get all admins (for super admin)
 const getAllAdmins = async (req, res) => {
@@ -404,6 +405,140 @@ const getAdminStats = async (req, res) => {
   }
 };
 
+// Forgot password
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        status: "error",
+        message: "Email is required",
+      });
+    }
+
+    const admin = await Admin.findOne({ email: email.toLowerCase() });
+    if (!admin) {
+      return res.status(404).json({
+        status: "error",
+        message: "Admin with this email not found",
+      });
+    }
+
+    // Generate reset token
+    const resetToken = admin.generateResetPasswordToken();
+    await admin.save({ validateBeforeSave: false });
+
+    // In a real application, you would send an email here
+    // For now, we'll just return the token (in production, remove this)
+    res.status(200).json({
+      status: "success",
+      message: "Password reset token generated successfully",
+      data: {
+        resetToken, // Remove this in production
+        message: "Password reset instructions have been sent to your email",
+      },
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+    });
+  }
+};
+
+// Reset password
+const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        status: "error",
+        message: "Token and new password are required",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        status: "error",
+        message: "Password must be at least 6 characters long",
+      });
+    }
+
+    // Hash the token to compare with stored token
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const admin = await Admin.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!admin) {
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid or expired reset token",
+      });
+    }
+
+    // Update password
+    admin.password = newPassword;
+    admin.resetPasswordToken = undefined;
+    admin.resetPasswordExpires = undefined;
+    await admin.save();
+
+    res.status(200).json({
+      status: "success",
+      message: "Password reset successfully",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+    });
+  }
+};
+
+// Direct password reset (admin only)
+const directPasswordReset = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({
+        status: "error",
+        message: "Password must be at least 6 characters long",
+      });
+    }
+
+    const admin = await Admin.findById(id);
+    if (!admin) {
+      return res.status(404).json({
+        status: "error",
+        message: "Admin not found",
+      });
+    }
+
+    // Update password directly
+    admin.password = newPassword;
+    await admin.save();
+
+    res.status(200).json({
+      status: "success",
+      message: "Password reset successfully",
+    });
+  } catch (error) {
+    console.error("Direct password reset error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   getAllAdmins,
   getAdminById,
@@ -412,4 +547,7 @@ module.exports = {
   deleteAdmin,
   toggleAdminStatus,
   getAdminStats,
+  forgotPassword,
+  resetPassword,
+  directPasswordReset,
 };

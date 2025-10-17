@@ -229,7 +229,8 @@ const createVehicle = async (req, res) => {
           }
         : {},
       status: status || "Active",
-      assignedDriver,
+      assignedDriver:
+        assignedDriver && assignedDriver.trim() !== "" ? assignedDriver : null,
       adminId,
     });
 
@@ -272,6 +273,11 @@ const updateVehicle = async (req, res) => {
     const { id } = req.params;
     const adminId = req.admin.id;
     const updateData = req.body;
+
+    // Handle empty string for assignedDriver
+    if (updateData.assignedDriver === "") {
+      updateData.assignedDriver = null;
+    }
 
     const vehicle = await Vehicle.findOne({ _id: id, adminId });
     if (!vehicle) {
@@ -660,6 +666,220 @@ const getVehicleStats = async (req, res) => {
   }
 };
 
+// Get vehicle document expiry notifications
+const getVehicleNotifications = async (req, res) => {
+  try {
+    const adminId = req.admin.id;
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfterTomorrow = new Date(today);
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+
+    // Get all vehicles for the admin
+    const vehicles = await Vehicle.find({ adminId }).select(
+      "registrationNumber insurance permit fitness puc"
+    );
+
+    const notifications = [];
+
+    vehicles.forEach((vehicle) => {
+      // Check insurance expiry
+      if (vehicle.insurance?.expiryDate) {
+        const expiryDate = new Date(vehicle.insurance.expiryDate);
+        const daysUntilExpiry = Math.ceil(
+          (expiryDate - today) / (1000 * 60 * 60 * 24)
+        );
+
+        if (daysUntilExpiry < 0) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "insurance",
+            expiryDate: vehicle.insurance.expiryDate,
+            urgency: "expired",
+            message: `Insurance has expired on ${expiryDate.toLocaleDateString()}`,
+          });
+        } else if (daysUntilExpiry === 0) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "insurance",
+            expiryDate: vehicle.insurance.expiryDate,
+            urgency: "expires-today",
+            message: `Insurance expires today (${expiryDate.toLocaleDateString()})`,
+          });
+        } else if (daysUntilExpiry === 1) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "insurance",
+            expiryDate: vehicle.insurance.expiryDate,
+            urgency: "expires-tomorrow",
+            message: `Insurance expires tomorrow (${expiryDate.toLocaleDateString()})`,
+          });
+        } else if (daysUntilExpiry === 2) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "insurance",
+            expiryDate: vehicle.insurance.expiryDate,
+            urgency: "expires-in-2-days",
+            message: `Insurance expires in 2 days (${expiryDate.toLocaleDateString()})`,
+          });
+        }
+      }
+
+      // Check permit expiry
+      if (vehicle.permit?.expiryDate) {
+        const expiryDate = new Date(vehicle.permit.expiryDate);
+        const daysUntilExpiry = Math.ceil(
+          (expiryDate - today) / (1000 * 60 * 60 * 24)
+        );
+
+        if (daysUntilExpiry < 0) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "permit",
+            expiryDate: vehicle.permit.expiryDate,
+            urgency: "expired",
+            message: `Permit has expired on ${expiryDate.toLocaleDateString()}`,
+          });
+        } else if (daysUntilExpiry === 0) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "permit",
+            expiryDate: vehicle.permit.expiryDate,
+            urgency: "expires-today",
+            message: `Permit expires today (${expiryDate.toLocaleDateString()})`,
+          });
+        } else if (daysUntilExpiry === 1) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "permit",
+            expiryDate: vehicle.permit.expiryDate,
+            urgency: "expires-tomorrow",
+            message: `Permit expires tomorrow (${expiryDate.toLocaleDateString()})`,
+          });
+        } else if (daysUntilExpiry === 2) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "permit",
+            expiryDate: vehicle.permit.expiryDate,
+            urgency: "expires-in-2-days",
+            message: `Permit expires in 2 days (${expiryDate.toLocaleDateString()})`,
+          });
+        }
+      }
+
+      // Check fitness certificate expiry
+      if (vehicle.fitness?.expiryDate) {
+        const expiryDate = new Date(vehicle.fitness.expiryDate);
+        const daysUntilExpiry = Math.ceil(
+          (expiryDate - today) / (1000 * 60 * 60 * 24)
+        );
+
+        if (daysUntilExpiry < 0) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "fitness",
+            expiryDate: vehicle.fitness.expiryDate,
+            urgency: "expired",
+            message: `Fitness Certificate has expired on ${expiryDate.toLocaleDateString()}`,
+          });
+        } else if (daysUntilExpiry === 0) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "fitness",
+            expiryDate: vehicle.fitness.expiryDate,
+            urgency: "expires-today",
+            message: `Fitness Certificate expires today (${expiryDate.toLocaleDateString()})`,
+          });
+        } else if (daysUntilExpiry === 1) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "fitness",
+            expiryDate: vehicle.fitness.expiryDate,
+            urgency: "expires-tomorrow",
+            message: `Fitness Certificate expires tomorrow (${expiryDate.toLocaleDateString()})`,
+          });
+        } else if (daysUntilExpiry === 2) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "fitness",
+            expiryDate: vehicle.fitness.expiryDate,
+            urgency: "expires-in-2-days",
+            message: `Fitness Certificate expires in 2 days (${expiryDate.toLocaleDateString()})`,
+          });
+        }
+      }
+
+      // Check PUC certificate expiry
+      if (vehicle.puc?.expiryDate) {
+        const expiryDate = new Date(vehicle.puc.expiryDate);
+        const daysUntilExpiry = Math.ceil(
+          (expiryDate - today) / (1000 * 60 * 60 * 24)
+        );
+
+        if (daysUntilExpiry < 0) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "puc",
+            expiryDate: vehicle.puc.expiryDate,
+            urgency: "expired",
+            message: `PUC Certificate has expired on ${expiryDate.toLocaleDateString()}`,
+          });
+        } else if (daysUntilExpiry === 0) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "puc",
+            expiryDate: vehicle.puc.expiryDate,
+            urgency: "expires-today",
+            message: `PUC Certificate expires today (${expiryDate.toLocaleDateString()})`,
+          });
+        } else if (daysUntilExpiry === 1) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "puc",
+            expiryDate: vehicle.puc.expiryDate,
+            urgency: "expires-tomorrow",
+            message: `PUC Certificate expires tomorrow (${expiryDate.toLocaleDateString()})`,
+          });
+        } else if (daysUntilExpiry === 2) {
+          notifications.push({
+            vehicleRegistration: vehicle.registrationNumber,
+            documentType: "puc",
+            expiryDate: vehicle.puc.expiryDate,
+            urgency: "expires-in-2-days",
+            message: `PUC Certificate expires in 2 days (${expiryDate.toLocaleDateString()})`,
+          });
+        }
+      }
+    });
+
+    // Sort notifications by urgency (expired first, then by days until expiry)
+    notifications.sort((a, b) => {
+      const urgencyOrder = {
+        expired: 0,
+        "expires-today": 1,
+        "expires-tomorrow": 2,
+        "expires-in-2-days": 3,
+      };
+      return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
+    });
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        notifications,
+        total: notifications.length,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching vehicle notifications:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch vehicle notifications",
+    });
+  }
+};
+
 module.exports = {
   getAllVehicles,
   getVehicleById,
@@ -669,4 +889,5 @@ module.exports = {
   toggleVehicleStatus,
   assignDriver,
   getVehicleStats,
+  getVehicleNotifications,
 };

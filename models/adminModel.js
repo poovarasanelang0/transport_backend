@@ -6,7 +6,7 @@ const adminSchema = new mongoose.Schema(
   {
     adminId: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
     },
     companyName: {
@@ -102,24 +102,24 @@ adminSchema.index({ role: 1 });
 
 // Generate adminId and hash password before saving
 adminSchema.pre("save", async function (next) {
-  // Generate adminId if it doesn't exist
-  if (!this.adminId) {
-    try {
-      const count = await this.constructor.countDocuments();
-      this.adminId = "ADM" + String(count + 1).padStart(3, "0");
-      // Successfully generated adminId
-    } catch (error) {
-      // Fallback to timestamp-based ID if counting fails
-      this.adminId = "ADM" + String(Date.now()).slice(-6);
-    }
-  }
-
-  // Hash password if modified
-  if (!this.isModified("password")) return next();
-
   try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    // Generate adminId if it doesn't exist
+    if (!this.adminId) {
+      try {
+        const count = await this.constructor.countDocuments();
+        this.adminId = "ADM" + String(count + 1).padStart(3, "0");
+      } catch (error) {
+        // Fallback to timestamp-based ID if counting fails
+        this.adminId = "ADM" + String(Date.now()).slice(-6);
+      }
+    }
+
+    // Hash password if modified
+    if (this.isModified("password")) {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
+    }
+
     next();
   } catch (error) {
     next(error);

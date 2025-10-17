@@ -197,6 +197,7 @@ const queryValidation = [
 // Routes
 router.get("/", queryValidation, vehicleController.getAllVehicles);
 router.get("/stats", vehicleController.getVehicleStats);
+router.get("/notifications", vehicleController.getVehicleNotifications);
 router.get("/:id", vehicleController.getVehicleById);
 
 // Create vehicle (temporarily without validation)

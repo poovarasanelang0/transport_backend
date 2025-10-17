@@ -3,15 +3,18 @@ const Admin = require("../models/adminModel");
 
 const authenticateToken = async (req, res, next) => {
   try {
-    console.log("=== AUTHENTICATE DEBUG ===");
-    console.log("req.headers:", req.headers);
-    console.log("req.headers.token:", req.headers["token"]);
+    // Check for JWT token in the 'token' header first, then fallback to Authorization header
+    let token = req.headers["token"];
 
-    const authHeader = req.headers["token"];
-    const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
-
-    console.log("authHeader:", authHeader);
-    console.log("token extracted:", token);
+    // If token header doesn't exist or doesn't start with 'Bearer ', check Authorization header
+    if (!token || !token.startsWith("Bearer ")) {
+      const authHeader =
+        req.headers["authorization"] || req.headers["Authorization"];
+      token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
+    } else {
+      // Remove 'Bearer ' prefix from token header
+      token = token.split(" ")[1];
+    }
 
     if (!token) {
       return res.status(401).json({
@@ -21,9 +24,6 @@ const authenticateToken = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("=== JWT DEBUG ===");
-    console.log("Token:", token);
-    console.log("Decoded:", decoded);
 
     // Check if admin still exists
     const admin = await Admin.findById(decoded.adminId).select("-password");
@@ -41,12 +41,6 @@ const authenticateToken = async (req, res, next) => {
         message: "Account is deactivated",
       });
     }
-
-    console.log("=== AUTH DEBUG ===");
-    console.log("decoded.adminId:", decoded.adminId);
-    console.log("admin found:", admin);
-    console.log("admin._id:", admin._id);
-    console.log("Setting req.admin =", admin);
 
     req.admin = admin;
     next();

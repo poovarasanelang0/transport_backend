@@ -167,6 +167,8 @@ const createTrip = async (req, res) => {
       days,
       status = "Upcoming",
       fuelAdvance,
+      driverAmountPerTrip,
+      driverAdvanceAmount,
       notes = "",
     } = req.body;
 
@@ -236,6 +238,8 @@ const createTrip = async (req, res) => {
       days: days ? parseInt(days) : null,
       status,
       fuelAdvance: parseFloat(fuelAdvance),
+      driverAmountPerTrip: parseFloat(driverAmountPerTrip),
+      driverAdvanceAmount: parseFloat(driverAdvanceAmount),
       notes,
       adminId,
     });
@@ -345,7 +349,13 @@ const updateTrip = async (req, res) => {
     Object.keys(updateData).forEach((key) => {
       if (key === "date" || key === "startTime" || key === "endTime") {
         trip[key] = new Date(updateData[key]);
-      } else if (key === "km" || key === "tons" || key === "fuelAdvance") {
+      } else if (
+        key === "km" ||
+        key === "tons" ||
+        key === "fuelAdvance" ||
+        key === "driverAmountPerTrip" ||
+        key === "driverAdvanceAmount"
+      ) {
         trip[key] = updateData[key] ? parseFloat(updateData[key]) : null;
       } else if (key === "days") {
         trip[key] = updateData[key] ? parseInt(updateData[key]) : null;

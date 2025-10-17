@@ -56,6 +56,14 @@ const tripSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    driverAmountPerTrip: {
+      type: Number,
+      required: true,
+    },
+    driverAdvanceAmount: {
+      type: Number,
+      required: true,
+    },
     // Additional fields
     actualKm: {
       type: Number,
@@ -164,11 +172,11 @@ tripSchema.methods.calculateFinancials = function (project) {
   const fuelUsed = this.fuelAdvance || 0; // Fuel advance in liters
   const fuelAmount = fuelUsed * fuelCostPerLiter;
 
-  // Calculate advance amount (typically 30-40% of total)
-  const advanceAmount = totalAmount * 0.35;
+  // Use driver advance amount from trip data
+  const advanceAmount = this.driverAdvanceAmount || 0;
 
-  // Calculate driver amount (typically 15-25% of total)
-  const driverAmount = totalAmount * 0.2;
+  // Use driver amount per trip from trip data
+  const driverAmount = this.driverAmountPerTrip || 0;
 
   // Calculate net earnings
   const netEarnings = totalAmount - fuelAmount - advanceAmount - driverAmount;

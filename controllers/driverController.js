@@ -162,14 +162,27 @@ const createDriver = async (req, res) => {
       adminId,
     });
 
-    // Generate unique driverId using timestamp approach
-    const timestamp = Date.now().toString().slice(-8);
-    const randomSuffix = Math.floor(Math.random() * 1000)
-      .toString()
-      .padStart(3, "0");
-    driver.driverId = `DRV${timestamp}${randomSuffix}`;
+    // Generate sequential driverId (DRV01, DRV02, etc.)
+    try {
+      const lastDriver = await Driver.findOne(
+        { driverId: { $regex: /^DRV\d+$/ } },
+        { driverId: 1 },
+        { sort: { driverId: -1 } }
+      );
 
-    console.log(`Controller generated driverId: ${driver.driverId}`);
+      let nextNumber = 1;
+      if (lastDriver && lastDriver.driverId) {
+        const lastNumber = parseInt(lastDriver.driverId.replace("DRV", ""));
+        nextNumber = lastNumber + 1;
+      }
+
+      driver.driverId = `DRV${String(nextNumber).padStart(2, "0")}`;
+    } catch (error) {
+      console.error("Error generating driverId:", error);
+      // Fallback to timestamp-based ID if counting fails
+      const timestamp = Date.now().toString().slice(-6);
+      driver.driverId = `DRV${timestamp}`;
+    }
 
     await driver.save();
 
