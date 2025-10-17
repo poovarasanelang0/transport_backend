@@ -267,22 +267,27 @@ app.use((err, req, res, next) => {
 // Initialize server
 const startServer = async () => {
   try {
+    console.log("Starting server...");
+    console.log("Environment:", process.env.NODE_ENV);
+    console.log("Vercel:", process.env.VERCEL);
+
     // Connect to database
+    console.log("Connecting to database...");
     await connectDB();
+    console.log("Database connected successfully");
 
     // Start server
     const PORT = process.env.PORT || 5002;
     app.listen(PORT, () => {
-      // Server started successfully
+      console.log(`Server started on port ${PORT}`);
     });
   } catch (error) {
+    console.error("Server startup error:", error);
     process.exit(1);
   }
 };
 
-// Start the server only if not in Vercel environment
-if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
-  startServer();
-}
+// Start the server
+startServer();
 
 module.exports = app;
