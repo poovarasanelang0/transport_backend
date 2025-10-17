@@ -6,6 +6,15 @@ const basicAuth = (req, res, next) => {
 
   const authHeader = req.headers.authorization;
 
+  // Debug logging for production
+  console.log("Basic Auth Debug:", {
+    path: req.path,
+    hasAuthHeader: !!authHeader,
+    authHeader: authHeader ? authHeader.substring(0, 20) + "..." : "none",
+    envUsername: process.env.BASIC_AUTH_USERNAME,
+    envPassword: process.env.BASIC_AUTH_PASSWORD ? "***" : "undefined"
+  });
+
   if (!authHeader || !authHeader.startsWith("Basic ")) {
     return res.status(401).json({
       status: "error",
@@ -20,7 +29,9 @@ const basicAuth = (req, res, next) => {
   const [username, password] = credentials.split(":");
 
   const expectedUsername = process.env.BASIC_AUTH_USERNAME || "poovarasan";
-  const expectedPassword = process.env.BASIC_AUTH_PASSWORD || "DAF87DSFDSFDSA98FSADKJE324KJL32HFD7FDSFB24343J49DSF";
+  const expectedPassword =
+    process.env.BASIC_AUTH_PASSWORD ||
+    "DAF87DSFDSFDSA98FSADKJE324KJL32HFD7FDSFB24343J49DSF";
 
   if (username === expectedUsername && password === expectedPassword) {
     next();
